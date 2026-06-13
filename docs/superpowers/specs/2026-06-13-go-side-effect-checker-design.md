@@ -216,6 +216,26 @@ func (s *Scanner) Scan(fn *ssa.Function) []Flag {
 - For standard library functions, use predefined flag mapping (no SSA analysis needed)
 - For third-party libraries, analyze their SSA (if available)
 
+### Standard Library Flag Mapping
+
+The following standard library functions are pre-mapped with flags:
+
+| Package | Function | Flag |
+|---------|----------|------|
+| `panic` | `panic()` | P |
+| `os` | `Exit()` | X |
+| `log` | `Fatal()`, `Fatalf()`, `Fatalln()` | X |
+| `os` | `Open()`, `Create()`, `ReadFile()`, `WriteFile()` | I |
+| `net` | `Dial()`, `Listen()` | I |
+| `database/sql` | `Open()` | I |
+| `io` | `Read()`, `Write()` | I |
+| `os` | `Getenv()`, `Setenv()` | S |
+| `rand` | `Int()`, `Intn()`, `Float64()` | S |
+| `unsafe` | `Pointer()`, `Sizeof()`, `Offsetof()` | U |
+| `time` | `Now()`, `After()`, `Sleep()` | T |
+| `reflect` | `TypeOf()`, `ValueOf()` | R |
+| `context` | `Background()`, `TODO()` | D |
+
 ## Cache Design
 
 ### Strategy
@@ -241,8 +261,15 @@ func (s *Scanner) Scan(fn *ssa.Function) []Flag {
 
 ### Cache Granularity
 
-- **Package level**: First check all file hashes in the package; if all match, read entire package cache
-- **Function level**: If some files in the package changed, only re-analyze functions in changed files
+The cache uses a two-level granularity strategy:
+
+1. **Package level**: First check all file hashes in the package; if all match, read entire package cache
+2. **Function level**: If some files in the package changed, only re-analyze functions in changed files
+
+**Selection logic**:
+- Always start with package-level check (fast path)
+- If package-level cache miss, fall back to function-level check
+- Function-level cache is only valid if the function's source file hash matches
 
 ### Cache Invalidation Logic
 
