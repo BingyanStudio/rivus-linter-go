@@ -1,0 +1,3 @@
+[submodule "rivus-linter"]
+	path = rivus-linter
+	url = https://github.com/jyi2ya/rivus-linter.git
