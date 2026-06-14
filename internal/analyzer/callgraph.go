@@ -86,6 +86,9 @@ func AnalyzeCallGraph(cg *callgraph.Graph, fset *token.FileSet) map[string]*Func
 
 // funcKey returns a unique key for a function.
 func funcKey(fn *ssa.Function) string {
+	if fn == nil {
+		return ""
+	}
 	if fn.Pkg != nil {
 		return fn.Pkg.Pkg.Path() + "." + fn.Name()
 	}
@@ -96,7 +99,7 @@ func funcKey(fn *ssa.Function) string {
 func collectFunctions(cg *callgraph.Graph) []*ssa.Function {
 	var funcs []*ssa.Function
 	for fn, node := range cg.Nodes {
-		if node != nil {
+		if fn != nil && node != nil {
 			funcs = append(funcs, fn)
 		}
 	}
@@ -114,7 +117,9 @@ func topoSort(funcs []*ssa.Function, cg *callgraph.Graph) []*ssa.Function {
 		}
 		if node := cg.Nodes[fn]; node != nil {
 			for _, out := range node.Out {
-				inDegree[out.Callee.Func]++
+				if callee := out.Callee.Func; callee != nil {
+					inDegree[callee]++
+				}
 			}
 		}
 	}
@@ -135,9 +140,11 @@ func topoSort(funcs []*ssa.Function, cg *callgraph.Graph) []*ssa.Function {
 
 		if node := cg.Nodes[fn]; node != nil {
 			for _, out := range node.Out {
-				inDegree[out.Callee.Func]--
-				if inDegree[out.Callee.Func] == 0 {
-					queue = append(queue, out.Callee.Func)
+				if callee := out.Callee.Func; callee != nil {
+					inDegree[callee]--
+					if inDegree[callee] == 0 {
+						queue = append(queue, callee)
+					}
 				}
 			}
 		}
