@@ -42,7 +42,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 				cfg.Dir = args[i]
 			}
 		case "--help", "-h":
-			fmt.Fprintln(stdout, usage)
+			fmt.Fprint(stdout, usage)
 			return nil
 		case "cache":
 			if i+1 < len(args) && args[i+1] == "clear" {
