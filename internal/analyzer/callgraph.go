@@ -109,27 +109,37 @@ func collectFunctions(cg *callgraph.Graph) []*ssa.Function {
 }
 
 // topoSort returns functions in topological order (leaves first).
-// Uses Kahn's algorithm.
+// Uses Kahn's algorithm on the reversed call graph.
+// "Leaves" are functions with no callees in the analyzed set (e.g., they only
+// call stdlib functions). These are processed first so that callers can inherit
+// their flags.
 func topoSort(funcs []*ssa.Function, cg *callgraph.Graph) []*ssa.Function {
-	// Compute in-degree for each function.
-	inDegree := make(map[*ssa.Function]int)
+	// Build a set of all functions for membership checks.
+	funcSet := make(map[*ssa.Function]bool)
 	for _, fn := range funcs {
-		if _, ok := inDegree[fn]; !ok {
-			inDegree[fn] = 0
-		}
+		funcSet[fn] = true
+	}
+
+	// Build reverse adjacency: callee -> list of callers.
+	// Also compute "internal out-degree" for each function (number of callees
+	// that are in the analyzed set).
+	outDegree := make(map[*ssa.Function]int)
+	reverseAdj := make(map[*ssa.Function][]*ssa.Function)
+	for _, fn := range funcs {
 		if node := cg.Nodes[fn]; node != nil {
 			for _, out := range node.Out {
-				if callee := out.Callee.Func; callee != nil {
-					inDegree[callee]++
+				if callee := out.Callee.Func; callee != nil && funcSet[callee] {
+					outDegree[fn]++
+					reverseAdj[callee] = append(reverseAdj[callee], fn)
 				}
 			}
 		}
 	}
 
-	// Start with functions that have no callees (leaves).
+	// Start with leaf functions (no internal callees).
 	var queue []*ssa.Function
 	for _, fn := range funcs {
-		if inDegree[fn] == 0 {
+		if outDegree[fn] == 0 {
 			queue = append(queue, fn)
 		}
 	}
@@ -140,14 +150,11 @@ func topoSort(funcs []*ssa.Function, cg *callgraph.Graph) []*ssa.Function {
 		queue = queue[1:]
 		order = append(order, fn)
 
-		if node := cg.Nodes[fn]; node != nil {
-			for _, out := range node.Out {
-				if callee := out.Callee.Func; callee != nil {
-					inDegree[callee]--
-					if inDegree[callee] == 0 {
-						queue = append(queue, callee)
-					}
-				}
+		// For each caller of fn, decrement its out-degree.
+		for _, caller := range reverseAdj[fn] {
+			outDegree[caller]--
+			if outDegree[caller] == 0 {
+				queue = append(queue, caller)
 			}
 		}
 	}
