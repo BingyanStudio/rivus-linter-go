@@ -51,10 +51,10 @@ var stdFuncFlags = map[string]model.FlagSet{
 	"os.Environ":  model.FlagSet(model.FlagSideEffect),
 
 	// Side Effect - random
-	"rand.Int":     model.FlagSet(model.FlagSideEffect),
-	"rand.Intn":    model.FlagSet(model.FlagSideEffect),
-	"rand.Float64": model.FlagSet(model.FlagSideEffect),
-	"rand.Read":    model.FlagSet(model.FlagSideEffect),
+	"math/rand.Int":     model.FlagSet(model.FlagSideEffect),
+	"math/rand.Intn":    model.FlagSet(model.FlagSideEffect),
+	"math/rand.Float64": model.FlagSet(model.FlagSideEffect),
+	"math/rand.Read":    model.FlagSet(model.FlagSideEffect),
 
 	// Unsafe
 	"unsafe.Pointer":    model.FlagSet(model.FlagUnsafe),
