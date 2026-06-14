@@ -50,6 +50,7 @@ func AnalyzeCallGraph(cg *callgraph.Graph, fset *token.FileSet) map[string]*Func
 		var details []model.Flag
 		for _, f := range ownFlags {
 			flagSet = flagSet.Add(f.Type)
+			f.FuncName = fn.Name()
 			details = append(details, f)
 		}
 
@@ -67,6 +68,7 @@ func AnalyzeCallGraph(cg *callgraph.Graph, fset *token.FileSet) map[string]*Func
 							details = append(details, model.Flag{
 								Type:     ft,
 								Position: model.PositionFromToken(fset, edge.Pos()),
+								FuncName: viaName,
 								Via:      &viaName,
 							})
 						}

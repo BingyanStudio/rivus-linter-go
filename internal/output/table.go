@@ -83,9 +83,9 @@ func Table(w io.Writer, result *model.AnalysisResult) error {
 					item.Source = fmt.Sprintf("via %s (%s:%d)",
 						*f.Via, f.Position.File, f.Position.Line)
 				} else {
-					// Own flag: show location.
-					item.Source = fmt.Sprintf("at %s:%d",
-						f.Position.File, f.Position.Line)
+					// Own flag: show function name and location.
+					item.Source = fmt.Sprintf("%s at %s:%d",
+						f.FuncName, f.Position.File, f.Position.Line)
 				}
 				items = append(items, item)
 			}

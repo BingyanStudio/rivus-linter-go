@@ -6,7 +6,11 @@ import "time"
 type Flag struct {
 	Type     FlagType `json:"type"`
 	Position Position `json:"position"`
-	Via      *string  `json:"via,omitempty"` // non-nil if inherited from another function
+	// FuncName is the function that produces this flag.
+	// For own flags, this is the function being analyzed.
+	// For inherited flags, this is the source function (same as Via).
+	FuncName string  `json:"func_name"`
+	Via      *string `json:"via,omitempty"` // non-nil if inherited from another function
 }
 
 // FuncResult is the analysis result for a single function.
