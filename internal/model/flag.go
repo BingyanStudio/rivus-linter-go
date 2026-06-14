@@ -1,5 +1,10 @@
 package model
 
+import (
+	"sort"
+	"strings"
+)
+
 // FlagType represents a side-effect category.
 type FlagType uint16
 
@@ -16,26 +21,32 @@ const (
 	FlagCGO                            // C
 )
 
-// flagNames maps each FlagType to its single-letter name.
-var flagNames = map[FlagType]string{
-	FlagPanic:      "P",
-	FlagGoroutine:  "G",
-	FlagContext:    "D",
-	FlagIO:        "I",
-	FlagSideEffect: "S",
-	FlagUnsafe:    "U",
-	FlagTime:      "T",
-	FlagExit:      "X",
-	FlagReflect:   "R",
-	FlagCGO:       "C",
-}
-
 // String returns the single-letter name for a FlagType.
 func (f FlagType) String() string {
-	if name, ok := flagNames[f]; ok {
-		return name
+	switch f {
+	case FlagPanic:
+		return "P"
+	case FlagGoroutine:
+		return "G"
+	case FlagContext:
+		return "D"
+	case FlagIO:
+		return "I"
+	case FlagSideEffect:
+		return "S"
+	case FlagUnsafe:
+		return "U"
+	case FlagTime:
+		return "T"
+	case FlagExit:
+		return "X"
+	case FlagReflect:
+		return "R"
+	case FlagCGO:
+		return "C"
+	default:
+		return "?"
 	}
-	return "?"
 }
 
 // FlagSet is a bitmask of FlagType values.
@@ -67,27 +78,13 @@ func (s FlagSet) String() string {
 		return ""
 	}
 	var names []string
-	for f, name := range flagNames {
+	for _, f := range AllFlags() {
 		if s.Has(f) {
-			names = append(names, name)
+			names = append(names, f.String())
 		}
 	}
-	// Simple sort by name for deterministic output.
-	for i := 0; i < len(names); i++ {
-		for j := i + 1; j < len(names); j++ {
-			if names[j] < names[i] {
-				names[i], names[j] = names[j], names[i]
-			}
-		}
-	}
-	result := ""
-	for i, n := range names {
-		if i > 0 {
-			result += ", "
-		}
-		result += n
-	}
-	return result
+	sort.Strings(names)
+	return strings.Join(names, ", ")
 }
 
 // AllFlags returns a slice of all defined FlagType values.
